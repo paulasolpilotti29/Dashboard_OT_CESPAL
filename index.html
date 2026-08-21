@@ -246,7 +246,11 @@ fetch("datos.csv")
 
         const obs =
             (r[9] || "").toUpperCase();
-        console.log(obs);
+        console.log(
+    "Reclamo:", r[1],
+    "Resolucion:", r[8],
+    "Obs:", r[9]
+);
 
         if(obs.includes("MONOFAS")){
 
