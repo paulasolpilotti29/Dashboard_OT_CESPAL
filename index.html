@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Dashboard OT Mauricio Ferace</title>
+<title>Dashboard OT Mauricio Ferace V3</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -22,9 +22,13 @@ body{
     padding:20px;
 }
 
+.header h1{
+    margin:0;
+}
+
 .kpis{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
     gap:15px;
     padding:20px;
 }
@@ -32,13 +36,14 @@ body{
 .kpi{
     background:white;
     border-radius:12px;
-    padding:20px;
+    padding:15px;
     box-shadow:0 2px 6px rgba(0,0,0,.1);
-    border-left:6px solid #0f4c81;
+    border-left:5px solid #0f4c81;
 }
 
 .kpi h3{
     margin:0 0 10px 0;
+    font-size:15px;
 }
 
 .kpi span{
@@ -55,12 +60,25 @@ body{
     box-shadow:0 2px 6px rgba(0,0,0,.1);
 }
 
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
 canvas{
-    max-height:500px;
+    max-height:420px;
+}
+
+@media(max-width:900px){
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
 }
 
 </style>
-
 </head>
 
 <body>
@@ -107,8 +125,23 @@ canvas{
     </div>
 
     <div class="kpi">
+        <h3>Medidores</h3>
+        <span id="medidores">0</span>
+    </div>
+
+    <div class="kpi">
+        <h3>Reconexiones</h3>
+        <span id="reconexiones">0</span>
+    </div>
+
+    <div class="kpi">
+        <h3>Verificaciones</h3>
+        <span id="verificaciones">0</span>
+    </div>
+
+    <div class="kpi">
         <h3>Promedio días</h3>
-        <span id="dias">Pendiente</span>
+        <span id="dias">0</span>
     </div>
 
 </div>
@@ -118,9 +151,18 @@ canvas{
     <canvas id="graficoMeses"></canvas>
 </div>
 
-<div class="card">
-    <h2>Top 10 Calles</h2>
-    <canvas id="graficoCalles"></canvas>
+<div class="grid">
+
+    <div class="card">
+        <h2>Top 10 Calles</h2>
+        <canvas id="graficoCalles"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>Top 10 Clientes</h2>
+        <canvas id="graficoClientes"></canvas>
+    </div>
+
 </div>
 
 <div class="card">
@@ -137,58 +179,49 @@ function convertirFecha(fechaTexto){
     try{
 
         const fecha = fechaTexto.split(" ")[0];
+
         const partes = fecha.split("/");
 
         if(partes.length !== 3) return null;
 
-        const dia = parseInt(partes[0]);
-        const mes = parseInt(partes[1]) - 1;
-        const anio = parseInt(partes[2]);
-
-        return new Date(anio,mes,dia);
+        return new Date(
+            parseInt(partes[2]),
+            parseInt(partes[1])-1,
+            parseInt(partes[0])
+        );
 
     }
     catch{
-
         return null;
-
     }
 
 }
 
 fetch("datos.csv")
-.then(r => r.text())
-.then(csv => {
 
-    const lineas = csv.split(/\r?\n/);
+.then(r => r.text())
+
+.then(csv => {
 
     const registros = [];
 
-    lineas.forEach(linea => {
+    csv.split(/\r?\n/).forEach(linea => {
 
-        if(!linea) return;
+        const cols = linea.split(";");
 
-        const columnas = linea.split(";");
-
-        const orden = (columnas[0] || "").trim();
-
-        if(!orden) return;
+        const orden = (cols[0] || "").trim();
 
         if(!isNaN(parseInt(orden))){
-
-            registros.push(columnas);
-
+            registros.push(cols);
         }
 
     });
-
-    document.getElementById("totalOT").innerText =
-        registros.length;
 
     const clientes = new Set();
     const calles = new Set();
 
     const contadorCalles = {};
+    const contadorClientes = {};
 
     const meses =
         [0,0,0,0,0,0,0,0,0,0,0,0];
@@ -197,7 +230,13 @@ fetch("datos.csv")
     let trifa = 0;
     let comercial = 0;
     let prepago = 0;
+    let medidores = 0;
+    let reconexiones = 0;
+    let verificaciones = 0;
     let otros = 0;
+
+    let totalDias = 0;
+    let cantidadDias = 0;
 
     registros.forEach(r => {
 
@@ -214,23 +253,21 @@ fetch("datos.csv")
 
         const titular = r[4] || "";
 
-        if(titular.trim() !== ""){
+        if(titular){
 
-            clientes.add(
-                titular.trim()
-            );
+            clientes.add(titular);
+
+            contadorClientes[titular] =
+                (contadorClientes[titular] || 0) + 1;
 
         }
 
-        const domicilio = r[5] || "";
-
-        let calle = domicilio;
+        let calle = r[5] || "";
 
         if(calle.includes("CP:")){
             calle = calle.split("CP:")[0];
         }
 
-        calle = calle.replace(/,\s*ARROYITO/i,"");
         calle = calle.replace(/\d+/g," ");
         calle = calle.replace(/\s+/g," ");
         calle = calle.trim();
@@ -246,39 +283,56 @@ fetch("datos.csv")
 
         const obs =
             (r[9] || "").toUpperCase();
-        console.log(
-    "Reclamo:", r[1],
-    "Resolucion:", r[8],
-    "Obs:", r[9]
-);
 
         if(obs.includes("MONOFAS")){
-
             mono++;
-
         }
         else if(obs.includes("TRIFAS")){
-
             trifa++;
-
         }
         else if(obs.includes("COMERCIAL")){
-
             comercial++;
-
         }
         else if(obs.includes("PREPAGO")){
-
             prepago++;
-
+        }
+        else if(obs.includes("MEDIDOR")){
+            medidores++;
+        }
+        else if(obs.includes("RECONEX")){
+            reconexiones++;
+        }
+        else if(obs.includes("VERIFIC")){
+            verificaciones++;
         }
         else{
-
             otros++;
+        }
+
+        const inicio =
+            convertirFecha(r[1]);
+
+        const fin =
+            convertirFecha(r[8]);
+
+        if(inicio && fin){
+
+            const dias =
+                (fin - inicio)/86400000;
+
+            if(!isNaN(dias) && dias >= 0){
+
+                totalDias += dias;
+                cantidadDias++;
+
+            }
 
         }
 
     });
+
+    document.getElementById("totalOT").innerText =
+        registros.length;
 
     document.getElementById("clientes").innerText =
         clientes.size;
@@ -298,21 +352,30 @@ fetch("datos.csv")
     document.getElementById("prepago").innerText =
         prepago;
 
+    document.getElementById("medidores").innerText =
+        medidores;
+
+    document.getElementById("reconexiones").innerText =
+        reconexiones;
+
+    document.getElementById("verificaciones").innerText =
+        verificaciones;
+
+    document.getElementById("dias").innerText =
+        cantidadDias > 0
+        ? (totalDias/cantidadDias).toFixed(1)
+        : "0";
+
     new Chart(
         document.getElementById("graficoMeses"),
         {
             type:"line",
             data:{
-                labels:[
-                    "Ene","Feb","Mar","Abr",
-                    "May","Jun","Jul","Ago",
-                    "Sep","Oct","Nov","Dic"
-                ],
+                labels:["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"],
                 datasets:[{
                     label:"OT por mes",
                     data:meses,
                     borderColor:"#0f4c81",
-                    backgroundColor:"#0f4c81",
                     tension:0.3
                 }]
             }
@@ -329,18 +392,33 @@ fetch("datos.csv")
         {
             type:"bar",
             data:{
-                labels:
-                    topCalles.map(x=>x[0]),
+                labels:topCalles.map(x=>x[0]),
                 datasets:[{
-                    label:"Cantidad de OT",
-                    data:
-                        topCalles.map(x=>x[1]),
+                    data:topCalles.map(x=>x[1]),
                     backgroundColor:"#4f8cc9"
                 }]
             },
-            options:{
-                indexAxis:"y"
-            }
+            options:{indexAxis:"y"}
+        }
+    );
+
+    const topClientes =
+        Object.entries(contadorClientes)
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,10);
+
+    new Chart(
+        document.getElementById("graficoClientes"),
+        {
+            type:"bar",
+            data:{
+                labels:topClientes.map(x=>x[0]),
+                datasets:[{
+                    data:topClientes.map(x=>x[1]),
+                    backgroundColor:"#0f4c81"
+                }]
+            },
+            options:{indexAxis:"y"}
         }
     );
 
@@ -354,6 +432,9 @@ fetch("datos.csv")
                     "Trifásica",
                     "Comercial",
                     "Prepago",
+                    "Medidores",
+                    "Reconexiones",
+                    "Verificaciones",
                     "Otros"
                 ],
                 datasets:[{
@@ -362,24 +443,15 @@ fetch("datos.csv")
                         trifa,
                         comercial,
                         prepago,
+                        medidores,
+                        reconexiones,
+                        verificaciones,
                         otros
-                    ],
-                    backgroundColor:[
-                        "#0f4c81",
-                        "#4f8cc9",
-                        "#66bb6a",
-                        "#ffca28",
-                        "#ef5350"
                     ]
                 }]
             }
         }
     );
-
-})
-.catch(error => {
-
-    console.error(error);
 
 });
 
