@@ -189,25 +189,28 @@ fetch("datos.csv")
 
         }
 
-        console.log(r);
+        
 
 const domicilio = r[5] || "";
 
         
-       let calle = domicilio;
+     let calle = domicilio;
 
+// Eliminar CP
 if(calle.includes("CP:")){
     calle = calle.split("CP:")[0];
 }
 
-calle = calle.replace(/,\s*ARROYITO/i,'');
+// Eliminar localidad
+calle = calle.replace(/,\s*ARROYITO/i,"");
 
-calle = calle.replace(/\d+$/,'');
+// Eliminar números de puerta
+calle = calle.replace(/\d+/g," ");
+
+// Limpiar espacios dobles
+calle = calle.replace(/\s+/g," ");
 
 calle = calle.trim();
-
-// eliminar altura
-calle = calle.replace(/\d+$/,'').trim();
 
         if(calle){
 
