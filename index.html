@@ -92,12 +92,15 @@ fetch("datos.csv")
 
     const registros = lineas.filter(l => {
 
-        const primerCampo =
-            l.split(";")[0]?.trim();
+    const primerCampo =
+        l.split(";")[0].trim();
 
-        return /^\\d+$/.test(primerCampo);
+    return (
+        primerCampo !== "" &&
+        !isNaN(Number(primerCampo))
+    );
 
-    });
+});
 
     document.getElementById("totalOT").innerText =
         registros.length;
