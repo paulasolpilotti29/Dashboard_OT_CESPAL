@@ -128,6 +128,19 @@ fetch("./datos.csv")
     let meses = [0,0,0,0,0,0,0,0,0,0,0,0];
 
     registros.forEach(r => {
+        const fechaTexto = r[1] || "";
+
+if(fechaTexto.includes("/")){
+
+    const partes = fechaTexto.split("/");
+
+    const mes = parseInt(partes[1]) - 1;
+
+    if(mes >= 0 && mes < 12){
+        meses[mes]++;
+    }
+
+}
 
        const titular = r[3] || "";
 const domicilio = r[4] || "";
