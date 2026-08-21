@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Dashboard OT Mauricio Ferace</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+/npm/chart.js"></script>
 
 <style>
 
@@ -39,7 +38,7 @@ body{
 }
 
 .kpi h3{
-    margin-top:0;
+    margin:0 0 10px 0;
 }
 
 .kpi span{
@@ -57,7 +56,7 @@ body{
 }
 
 canvas{
-    max-height:450px;
+    max-height:500px;
 }
 
 </style>
@@ -88,8 +87,28 @@ canvas{
     </div>
 
     <div class="kpi">
+        <h3>Monofásicas</h3>
+        <span id="mono">0</span>
+    </div>
+
+    <div class="kpi">
+        <h3>Trifásicas</h3>
+        <span id="trifa">0</span>
+    </div>
+
+    <div class="kpi">
+        <h3>Comerciales</h3>
+        <span id="comercial">0</span>
+    </div>
+
+    <div class="kpi">
+        <h3>Prepago</h3>
+        <span id="prepago">0</span>
+    </div>
+
+    <div class="kpi">
         <h3>Promedio días</h3>
-        <span id="dias">0</span>
+        <span id="dias">Pendiente</span>
     </div>
 
 </div>
@@ -103,10 +122,12 @@ canvas{
     <h2>Top 10 Calles</h2>
     <canvas id="graficoCalles"></canvas>
 </div>
+
 <div class="card">
     <h2>Distribución de Trabajos</h2>
     <canvas id="graficoTipos"></canvas>
 </div>
+
 <script>
 
 function convertirFecha(fechaTexto){
@@ -116,7 +137,6 @@ function convertirFecha(fechaTexto){
     try{
 
         const fecha = fechaTexto.split(" ")[0];
-
         const partes = fecha.split("/");
 
         if(partes.length !== 3) return null;
@@ -125,17 +145,19 @@ function convertirFecha(fechaTexto){
         const mes = parseInt(partes[1]) - 1;
         const anio = parseInt(partes[2]);
 
-        return new Date(anio, mes, dia);
+        return new Date(anio,mes,dia);
 
     }
     catch{
+
         return null;
+
     }
 
 }
 
 fetch("datos.csv")
-.then(response => response.text())
+.then(r => r.text())
 .then(csv => {
 
     const lineas = csv.split(/\r?\n/);
@@ -153,7 +175,9 @@ fetch("datos.csv")
         if(!orden) return;
 
         if(!isNaN(parseInt(orden))){
+
             registros.push(columnas);
+
         }
 
     });
@@ -168,6 +192,12 @@ fetch("datos.csv")
 
     const meses =
         [0,0,0,0,0,0,0,0,0,0,0,0];
+
+    let mono = 0;
+    let trifa = 0;
+    let comercial = 0;
+    let prepago = 0;
+    let otros = 0;
 
     registros.forEach(r => {
 
@@ -192,28 +222,18 @@ fetch("datos.csv")
 
         }
 
-        
+        const domicilio = r[5] || "";
 
-const domicilio = r[5] || "";
+        let calle = domicilio;
 
-        
-     let calle = domicilio;
+        if(calle.includes("CP:")){
+            calle = calle.split("CP:")[0];
+        }
 
-// Eliminar CP
-if(calle.includes("CP:")){
-    calle = calle.split("CP:")[0];
-}
-
-// Eliminar localidad
-calle = calle.replace(/,\s*ARROYITO/i,"");
-
-// Eliminar números de puerta
-calle = calle.replace(/\d+/g," ");
-
-// Limpiar espacios dobles
-calle = calle.replace(/\s+/g," ");
-
-calle = calle.trim();
+        calle = calle.replace(/,\s*ARROYITO/i,"");
+        calle = calle.replace(/\d+/g," ");
+        calle = calle.replace(/\s+/g," ");
+        calle = calle.trim();
 
         if(calle){
 
@@ -221,6 +241,35 @@ calle = calle.trim();
 
             contadorCalles[calle] =
                 (contadorCalles[calle] || 0) + 1;
+
+        }
+
+        const obs =
+            (r[8] || "").toUpperCase();
+
+        if(obs.includes("MONOFAS")){
+
+            mono++;
+
+        }
+        else if(obs.includes("TRIFAS")){
+
+            trifa++;
+
+        }
+        else if(obs.includes("COMERCIAL")){
+
+            comercial++;
+
+        }
+        else if(obs.includes("PREPAGO")){
+
+            prepago++;
+
+        }
+        else{
+
+            otros++;
 
         }
 
@@ -232,8 +281,17 @@ calle = calle.trim();
     document.getElementById("calles").innerText =
         calles.size;
 
-    document.getElementById("dias").innerText =
-        "Pendiente";
+    document.getElementById("mono").innerText =
+        mono;
+
+    document.getElementById("trifa").innerText =
+        trifa;
+
+    document.getElementById("comercial").innerText =
+        comercial;
+
+    document.getElementById("prepago").innerText =
+        prepago;
 
     new Chart(
         document.getElementById("graficoMeses"),
@@ -281,6 +339,38 @@ calle = calle.trim();
         }
     );
 
+    new Chart(
+        document.getElementById("graficoTipos"),
+        {
+            type:"doughnut",
+            data:{
+                labels:[
+                    "Monofásica",
+                    "Trifásica",
+                    "Comercial",
+                    "Prepago",
+                    "Otros"
+                ],
+                datasets:[{
+                    data:[
+                        mono,
+                        trifa,
+                        comercial,
+                        prepago,
+                        otros
+                    ],
+                    backgroundColor:[
+                        "#0f4c81",
+                        "#4f8cc9",
+                        "#66bb6a",
+                        "#ffca28",
+                        "#ef5350"
+                    ]
+                }]
+            }
+        }
+    );
+
 })
 .catch(error => {
 
@@ -291,4 +381,4 @@ calle = calle.trim();
 </script>
 
 </body>
-</html>  
+</html>
