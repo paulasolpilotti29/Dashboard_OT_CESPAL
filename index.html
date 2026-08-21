@@ -29,8 +29,8 @@ body{
 .kpis{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-    gap:15px;
-    padding:20px;
+    gap:10px;
+    padding:10px;
 }
 
 .kpi{
@@ -67,7 +67,13 @@ body{
 }
 
 canvas{
-    max-height:420px;
+    max-height:280px;
+}
+    .dashboard-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+    margin:15px;
 }
 
 @media(max-width:900px){
