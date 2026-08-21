@@ -6,6 +6,9 @@
 
 <title>Dashboard OT Mauricio Ferace</title>
 
+://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 <style>
 body{
     margin:0;
@@ -76,7 +79,13 @@ body{
     </div>
 
 </div>
+<div style="padding:20px">
 
+<h2>Evolución Mensual</h2>
+
+<canvas id="graficoMeses"></canvas>
+
+</div>
 <script>
 
 console.log("INICIO");
@@ -119,14 +128,20 @@ fetch("./datos.csv")
 
     registros.forEach(r => {
 
-        const titular = r[3] || "";
-        const domicilio = r[4] || "";
+       const titular = r[3] || "";
+const domicilio = r[4] || "";
+
 
         if(titular.trim() !== "")
             clientes.add(titular.trim());
 
-        const calle =
-            domicilio.split("CP:")[0].trim();
+        let calle = domicilio;
+
+if(calle.includes("CP:")){
+    calle = calle.split("CP:")[0];
+}
+
+calle = calle.trim();
 
         if(calle !== "")
             calles.add(calle);
