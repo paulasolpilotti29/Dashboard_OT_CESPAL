@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Dashboard OT CESPAL</title>
+<title>Dashboard OT Mauricio Ferace</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -36,6 +36,10 @@ body{
     padding:20px;
     box-shadow:0 2px 6px rgba(0,0,0,.1);
     border-left:6px solid #0f4c81;
+}
+
+.kpi h3{
+    margin-top:0;
 }
 
 .kpi span{
@@ -94,11 +98,11 @@ canvas{
     <h2>Evolución Mensual</h2>
     <canvas id="graficoMeses"></canvas>
 </div>
-    <div class="card">
+
+<div class="card">
     <h2>Top 10 Calles</h2>
     <canvas id="graficoCalles"></canvas>
 </div>
-
 
 <script>
 
@@ -106,18 +110,24 @@ function convertirFecha(fechaTexto){
 
     if(!fechaTexto) return null;
 
-    const fechaHora = fechaTexto.split(" ");
-    const fecha = fechaHora[0];
+    try{
 
-    const partes = fecha.split("/");
+        const fecha = fechaTexto.split(" ")[0];
 
-    if(partes.length !== 3) return null;
+        const partes = fecha.split("/");
 
-    const dia = parseInt(partes[0]);
-    const mes = parseInt(partes[1]) - 1;
-    const anio = parseInt(partes[2]);
+        if(partes.length !== 3) return null;
 
-    return new Date(anio, mes, dia);
+        const dia = parseInt(partes[0]);
+        const mes = parseInt(partes[1]) - 1;
+        const anio = parseInt(partes[2]);
+
+        return new Date(anio, mes, dia);
+
+    }
+    catch{
+        return null;
+    }
 
 }
 
@@ -125,9 +135,9 @@ fetch("datos.csv")
 .then(response => response.text())
 .then(csv => {
 
-    let lineas = csv.split(/\r?\n/);
+    const lineas = csv.split(/\r?\n/);
 
-    let registros = [];
+    const registros = [];
 
     lineas.forEach(linea => {
 
@@ -150,34 +160,33 @@ fetch("datos.csv")
 
     const clientes = new Set();
     const calles = new Set();
+
     const contadorCalles = {};
 
     const meses =
         [0,0,0,0,0,0,0,0,0,0,0,0];
 
-    let totalDias = 0;
-    let cantidadDias = 0;
-
     registros.forEach(r => {
 
-        const fechaTexto = r[1] || "";
+        const fecha =
+            convertirFecha(r[1]);
 
-        const fechaRegistro =
-            convertirFecha(fechaTexto);
+        if(fecha){
 
-        if(fechaRegistro){
-
-            const mes =
-                fechaRegistro.getMonth();
-
-            meses[mes]++;
+            meses[
+                fecha.getMonth()
+            ]++;
 
         }
 
         const titular = r[3] || "";
 
         if(titular.trim() !== ""){
-            clientes.add(titular.trim());
+
+            clientes.add(
+                titular.trim()
+            );
+
         }
 
         const domicilio = r[4] || "";
@@ -185,35 +194,20 @@ fetch("datos.csv")
         let calle = domicilio;
 
         if(calle.includes("CP:")){
-            calle = calle.split("CP:")[0];
+
+            calle =
+                calle.split("CP:")[0];
+
         }
 
         calle = calle.trim();
 
-        if(calle !== ""){
+        if(calle){
 
-    calles.add(calle);
+            calles.add(calle);
 
-    contadorCalles[calle] =
-        (contadorCalles[calle] || 0) + 1;
-
-}
-
-        const fechaReclamo = convertirFecha(r[1]);
-        const fechaResolucion = convertirFecha(r[7]);
-
-        if(fechaReclamo && fechaResolucion){
-
-            const dias =
-                (fechaResolucion - fechaReclamo)
-                / 86400000;
-
-            if(!isNaN(dias) && dias >= 0){
-
-                totalDias += dias;
-                cantidadDias++;
-
-            }
+            contadorCalles[calle] =
+                (contadorCalles[calle] || 0) + 1;
 
         }
 
@@ -226,37 +220,10 @@ fetch("datos.csv")
         calles.size;
 
     document.getElementById("dias").innerText =
-        cantidadDias > 0
-        ? (totalDias / cantidadDias).toFixed(1)
-        : "0";
+        "Pendiente";
 
     new Chart(
         document.getElementById("graficoMeses"),
-        const topCalles =
-    Object.entries(contadorCalles)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,10);
-
-new Chart(
-    document.getElementById("graficoCalles"),
-    {
-        type:"bar",
-        data:{
-            labels:
-                topCalles.map(x=>x[0]),
-            datasets:[{
-                label:"OT",
-                data:
-                    topCalles.map(x=>x[1]),
-                backgroundColor:"#4f8cc9"
-            }]
-        },
-        options:{
-            indexAxis:"y",
-            responsive:true
-        }
-    }
-);
         {
             type:"line",
             data:{
@@ -272,16 +239,43 @@ new Chart(
                     backgroundColor:"#0f4c81",
                     tension:0.3
                 }]
-            },
-            options:{
-                responsive:true
             }
         }
     );
+
+    const topCalles =
+        Object.entries(contadorCalles)
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,10);
+
+    new Chart(
+        document.getElementById("graficoCalles"),
+        {
+            type:"bar",
+            data:{
+                labels:
+                    topCalles.map(x=>x[0]),
+                datasets:[{
+                    label:"Cantidad de OT",
+                    data:
+                        topCalles.map(x=>x[1]),
+                    backgroundColor:"#4f8cc9"
+                }]
+            },
+            options:{
+                indexAxis:"y"
+            }
+        }
+    );
+
+})
+.catch(error => {
+
+    console.error(error);
 
 });
 
 </script>
 
 </body>
-</html>
+</html>  
