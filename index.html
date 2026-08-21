@@ -172,8 +172,27 @@ fetch("datos.csv")
 
         if(fechaReclamo && fechaResolucion){
 
-            const inicio = new Date(fechaReclamo);
-            const fin = new Date(fechaResolucion);
+            function convertirFecha(fechaTexto){
+
+    const partes = fechaTexto.split(" ");
+
+    const fecha = partes[0];
+
+    const f = fecha.split("/");
+
+    const dia = parseInt(f[0]);
+    const mes = parseInt(f[1]) - 1;
+    const anio = parseInt(f[2]);
+
+    return new Date(anio, mes, dia);
+
+}
+            const inicio =
+    convertirFecha(fechaReclamo);
+
+const fin =
+    convertirFecha(fechaResolucion);
+
 
             const dias =
                 (fin - inicio) /
