@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Dashboard OT Mauricio Ferace</title>
+<title>Dashboard OT CESPAL</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
 body{
     margin:0;
-    font-family:Segoe UI,Arial,sans-serif;
+    font-family:Segoe UI, Arial, sans-serif;
     background:#eef3f8;
 }
 
@@ -23,7 +25,7 @@ body{
 
 .kpis{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
     gap:15px;
     padding:20px;
 }
@@ -33,11 +35,7 @@ body{
     border-radius:12px;
     padding:20px;
     box-shadow:0 2px 6px rgba(0,0,0,.1);
-}
-
-.kpi h3{
-    margin:0;
-    color:#666;
+    border-left:6px solid #0f4c81;
 }
 
 .kpi span{
@@ -45,6 +43,19 @@ body{
     font-weight:bold;
     color:#0f4c81;
 }
+
+.card{
+    background:white;
+    margin:20px;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+
+canvas{
+    max-height:450px;
+}
+
 </style>
 
 </head>
@@ -78,22 +89,17 @@ body{
     </div>
 
 </div>
-<div style="padding:20px">
 
-<h2>Evolución Mensual</h2>
-
-<canvas id="graficoMeses"></canvas>
-
+<div class="card">
+    <h2>Evolución Mensual</h2>
+    <canvas id="graficoMeses"></canvas>
 </div>
+
 <script>
 
-console.log("INICIO");
-
-fetch("./datos.csv")
+fetch("datos.csv")
 .then(response => response.text())
 .then(csv => {
-
-    console.log("CSV CARGADO");
 
     let lineas = csv.split(/\r?\n/);
 
@@ -101,63 +107,84 @@ fetch("./datos.csv")
 
     lineas.forEach(linea => {
 
-        if (!linea) return;
+        if(!linea) return;
 
         const columnas = linea.split(";");
 
         const orden = (columnas[0] || "").trim();
 
-        if (!orden) return;
+        if(!orden) return;
 
-        if (!isNaN(parseInt(orden))) {
-
+        if(!isNaN(parseInt(orden))){
             registros.push(columnas);
-
         }
 
     });
 
-    console.log("Registros encontrados:", registros.length);
-
     document.getElementById("totalOT").innerText =
         registros.length;
 
-    let clientes = new Set();
-    let calles = new Set();
+    const clientes = new Set();
+    const calles = new Set();
+
     let meses = [0,0,0,0,0,0,0,0,0,0,0,0];
 
+    let totalDias = 0;
+    let cantidadDias = 0;
+
     registros.forEach(r => {
+
         const fechaTexto = r[1] || "";
 
-if(fechaTexto.includes("/")){
+        if(fechaTexto.includes("/")){
 
-    const partes = fechaTexto.split("/");
+            const partes = fechaTexto.split("/");
 
-    const mes = parseInt(partes[1]) - 1;
+            const mes = parseInt(partes[1]) - 1;
 
-    if(mes >= 0 && mes < 12){
-        meses[mes]++;
-    }
+            if(mes >= 0 && mes <= 11){
+                meses[mes]++;
+            }
+        }
 
-}
+        const titular = r[3] || "";
 
-       const titular = r[3] || "";
-const domicilio = r[5] || "";
-
-
-        if(titular.trim() !== "")
+        if(titular.trim() !== ""){
             clientes.add(titular.trim());
+        }
+
+        const domicilio = r[4] || "";
 
         let calle = domicilio;
 
-if(calle.includes("CP:")){
-    calle = calle.split("CP:")[0];
-}
+        if(calle.includes("CP:")){
+            calle = calle.split("CP:")[0];
+        }
 
-calle = calle.trim();
+        calle = calle.trim();
 
-        if(calle !== "")
+        if(calle !== ""){
             calles.add(calle);
+        }
+
+        const fechaReclamo = r[1];
+        const fechaResolucion = r[7];
+
+        if(fechaReclamo && fechaResolucion){
+
+            const inicio = new Date(fechaReclamo);
+            const fin = new Date(fechaResolucion);
+
+            const dias =
+                (fin - inicio) /
+                (1000 * 60 * 60 * 24);
+
+            if(!isNaN(dias)){
+                totalDias += dias;
+                cantidadDias++;
+            }
+
+        }
 
     });
 
@@ -166,34 +193,40 @@ calle = calle.trim();
 
     document.getElementById("calles").innerText =
         calles.size;
+
+    document.getElementById("dias").innerText =
+        cantidadDias > 0
+        ? (totalDias / cantidadDias).toFixed(1)
+        : "0";
+
     new Chart(
-    document.getElementById("graficoMeses"),
-    {
-        type: "line",
-        data: {
-            labels: [
-                "Ene","Feb","Mar","Abr",
-                "May","Jun","Jul","Ago",
-                "Sep","Oct","Nov","Dic"
-            ],
-            datasets: [{
-                label: "OT por mes",
-                data: meses,
-                borderColor: "#0f4c81",
-                backgroundColor: "#0f4c81",
-                tension: 0.3
-            }]
+        document.getElementById("graficoMeses"),
+        {
+            type:"bar",
+            data:{
+                labels:[
+                    "Ene","Feb","Mar","Abr",
+                    "May","Jun","Jul","Ago",
+                    "Sep","Oct","Nov","Dic"
+                ],
+                datasets:[{
+                    label:"OT por mes",
+                    data:meses,
+                    backgroundColor:"#0f4c81"
+                }]
+            },
+            options:{
+                responsive:true
+            }
         }
-    }
-);
+    );
 
 })
 .catch(error => {
 
-    console.error("ERROR CSV:", error);
+    console.error(error);
 
 });
-
 
 </script>
 
