@@ -94,6 +94,11 @@ canvas{
     <h2>Evolución Mensual</h2>
     <canvas id="graficoMeses"></canvas>
 </div>
+    <div class="card">
+    <h2>Top 10 Calles</h2>
+    <canvas id="graficoCalles"></canvas>
+</div>
+
 
 <script>
 
@@ -145,6 +150,7 @@ fetch("datos.csv")
 
     const clientes = new Set();
     const calles = new Set();
+    const contadorCalles = {};
 
     const meses =
         [0,0,0,0,0,0,0,0,0,0,0,0];
@@ -185,8 +191,13 @@ fetch("datos.csv")
         calle = calle.trim();
 
         if(calle !== ""){
-            calles.add(calle);
-        }
+
+    calles.add(calle);
+
+    contadorCalles[calle] =
+        (contadorCalles[calle] || 0) + 1;
+
+}
 
         const fechaReclamo = convertirFecha(r[1]);
         const fechaResolucion = convertirFecha(r[7]);
@@ -221,6 +232,31 @@ fetch("datos.csv")
 
     new Chart(
         document.getElementById("graficoMeses"),
+        const topCalles =
+    Object.entries(contadorCalles)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,10);
+
+new Chart(
+    document.getElementById("graficoCalles"),
+    {
+        type:"bar",
+        data:{
+            labels:
+                topCalles.map(x=>x[0]),
+            datasets:[{
+                label:"OT",
+                data:
+                    topCalles.map(x=>x[1]),
+                backgroundColor:"#4f8cc9"
+            }]
+        },
+        options:{
+            indexAxis:"y",
+            responsive:true
+        }
+    }
+);
         {
             type:"line",
             data:{
