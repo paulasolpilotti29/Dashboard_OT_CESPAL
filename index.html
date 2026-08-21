@@ -1,3 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard OT Mauricio Ferace</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Segoe UI,Arial,sans-serif;
+    background:#eef3f8;
+}
+
+.header{
+    background:#0f4c81;
+    color:white;
+    padding:20px;
+}
+
+.kpis{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:15px;
+    padding:20px;
+}
+
+.kpi{
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+
+.kpi h3{
+    margin:0;
+    color:#666;
+}
+
+.kpi span{
+    font-size:34px;
+    font-weight:bold;
+    color:#0f4c81;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+    <h1>⚡ Dashboard OT Mauricio Ferace</h1>
+</div>
+
+<div class="kpis">
+
+    <div class="kpi">
+        <h3>Total OT</h3>
+        <span id="totalOT">0</span>
+    </div>
+
+    <div class="kpi">
+        <h3>Clientes</h3>
+        <span id="clientes">0</span>
+    </div>
+
+    <div class="kpi">
+        <h3>Calles</h3>
+        <span id="calles">0</span>
+    </div>
+
+    <div class="kpi">
+        <h3>Promedio días</h3>
+        <span id="dias">0</span>
+    </div>
+
+</div>
+
 <script>
 
 fetch("datos.csv")
@@ -6,29 +85,22 @@ fetch("datos.csv")
 
     let lineas = csv.split(/\r?\n/);
 
-    // quitar líneas vacías
     lineas = lineas.filter(l =>
         l.trim() !== "" &&
         l !== ";;;;;;;;;;"
     );
 
-    // encabezado
-    const encabezado =
-        lineas[0].split(";");
+    const registros = lineas.filter(l => {
 
-    // registros válidos
-    const registros =
-        lineas.filter(l => {
+        const primerCampo =
+            l.split(";")[0]?.trim();
 
-            const primerCampo =
-                l.split(";")[0]?.trim();
+        return /^\\d+$/.test(primerCampo);
 
-            return /^\d+$/.test(primerCampo);
+    });
 
-        });
-
-    document.getElementById("totalOT")
-        .innerText = registros.length;
+    document.getElementById("totalOT").innerText =
+        registros.length;
 
     const clientes = new Set();
     const calles = new Set();
@@ -37,26 +109,26 @@ fetch("datos.csv")
 
         const c = r.split(";");
 
-        // Titular
-        clientes.add(c[4]);
+        if(c[4]) clientes.add(c[4]);
 
-        // Calle
         let domicilio = c[5] || "";
 
         let calle =
-            domicilio.split(" CP:")[0]
-            .trim();
+            domicilio.split(" CP:")[0].trim();
 
-        calles.add(calle);
+        if(calle) calles.add(calle);
 
     });
 
-    document.getElementById("clientes")
-        .innerText = clientes.size;
+    document.getElementById("clientes").innerText =
+        clientes.size;
 
-    document.getElementById("calles")
-        .innerText = calles.size;
+    document.getElementById("calles").innerText =
+        calles.size;
 
 });
 
 </script>
+
+</body>
+</html>
