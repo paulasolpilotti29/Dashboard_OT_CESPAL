@@ -7,7 +7,7 @@
 
 <title>Dashboard OT CESPAL</title>
 
-cdn.jsdelivr.net/npm/chart.js"></script>
+.js"></script>
 
 <style>
 
@@ -97,6 +97,25 @@ canvas{
 
 <script>
 
+function convertirFecha(fechaTexto){
+
+    if(!fechaTexto) return null;
+
+    const fechaHora = fechaTexto.split(" ");
+    const fecha = fechaHora[0];
+
+    const partes = fecha.split("/");
+
+    if(partes.length !== 3) return null;
+
+    const dia = parseInt(partes[0]);
+    const mes = parseInt(partes[1]) - 1;
+    const anio = parseInt(partes[2]);
+
+    return new Date(anio, mes, dia);
+
+}
+
 fetch("datos.csv")
 .then(response => response.text())
 .then(csv => {
@@ -127,7 +146,8 @@ fetch("datos.csv")
     const clientes = new Set();
     const calles = new Set();
 
-    let meses = [0,0,0,0,0,0,0,0,0,0,0,0];
+    const meses =
+        [0,0,0,0,0,0,0,0,0,0,0,0];
 
     let totalDias = 0;
     let cantidadDias = 0;
@@ -136,15 +156,16 @@ fetch("datos.csv")
 
         const fechaTexto = r[1] || "";
 
-        if(fechaTexto.includes("/")){
+        const fechaRegistro =
+            convertirFecha(fechaTexto);
 
-            const partes = fechaTexto.split("/");
+        if(fechaRegistro){
 
-            const mes = parseInt(partes[1]) - 1;
+            const mes =
+                fechaRegistro.getMonth();
 
-            if(mes >= 0 && mes <= 11){
-                meses[mes]++;
-            }
+            meses[mes]++;
+
         }
 
         const titular = r[3] || "";
@@ -167,40 +188,20 @@ fetch("datos.csv")
             calles.add(calle);
         }
 
-        const fechaReclamo = r[1];
-        const fechaResolucion = r[7];
+        const fechaReclamo = convertirFecha(r[1]);
+        const fechaResolucion = convertirFecha(r[7]);
 
         if(fechaReclamo && fechaResolucion){
 
-            function convertirFecha(fechaTexto){
-
-    const partes = fechaTexto.split(" ");
-
-    const fecha = partes[0];
-
-    const f = fecha.split("/");
-
-    const dia = parseInt(f[0]);
-    const mes = parseInt(f[1]) - 1;
-    const anio = parseInt(f[2]);
-
-    return new Date(anio, mes, dia);
-
-}
-            const inicio =
-    convertirFecha(fechaReclamo);
-
-const fin =
-    convertirFecha(fechaResolucion);
-
-
             const dias =
-                (fin - inicio) /
-                (1000 * 60 * 60 * 24);
+                (fechaResolucion - fechaReclamo)
+                / 86400000;
 
-            if(!isNaN(dias)){
+            if(!isNaN(dias) && dias >= 0){
+
                 totalDias += dias;
                 cantidadDias++;
+
             }
 
         }
@@ -221,7 +222,7 @@ const fin =
     new Chart(
         document.getElementById("graficoMeses"),
         {
-            type:"bar",
+            type:"line",
             data:{
                 labels:[
                     "Ene","Feb","Mar","Abr",
@@ -231,7 +232,9 @@ const fin =
                 datasets:[{
                     label:"OT por mes",
                     data:meses,
-                    backgroundColor:"#0f4c81"
+                    borderColor:"#0f4c81",
+                    backgroundColor:"#0f4c81",
+                    tension:0.3
                 }]
             },
             options:{
@@ -239,11 +242,6 @@ const fin =
             }
         }
     );
-
-})
-.catch(error => {
-
-    console.error(error);
 
 });
 
