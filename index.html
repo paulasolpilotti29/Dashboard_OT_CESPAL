@@ -6,7 +6,7 @@
 
 <title>Dashboard OT Mauricio Ferace</title>
 
-://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 <style>
@@ -167,6 +167,26 @@ calle = calle.trim();
 
     document.getElementById("calles").innerText =
         calles.size;
+    new Chart(
+    document.getElementById("graficoMeses"),
+    {
+        type: "line",
+        data: {
+            labels: [
+                "Ene","Feb","Mar","Abr",
+                "May","Jun","Jul","Ago",
+                "Sep","Oct","Nov","Dic"
+            ],
+            datasets: [{
+                label: "OT por mes",
+                data: meses,
+                borderColor: "#0f4c81",
+                backgroundColor: "#0f4c81",
+                tension: 0.3
+            }]
+        }
+    }
+);
 
 })
 .catch(error => {
