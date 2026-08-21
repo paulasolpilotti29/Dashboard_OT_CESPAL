@@ -79,50 +79,57 @@ body{
 
 <script>
 
-fetch("datos.csv")
-.then(r => r.text())
+console.log("INICIO");
+
+fetch("./datos.csv")
+.then(response => response.text())
 .then(csv => {
+
+    console.log("CSV CARGADO");
 
     let lineas = csv.split(/\r?\n/);
 
-    lineas = lineas.filter(l =>
-        l.trim() !== "" &&
-        l !== ";;;;;;;;;;"
-    );
+    let registros = [];
 
-    const registros = lineas.filter(l => {
+    lineas.forEach(linea => {
 
-    const primerCampo =
-        l.split(";")[0].trim();
+        if (!linea) return;
 
-    return (
-        primerCampo !== "" &&
-        !isNaN(Number(primerCampo))
-    );
+        const columnas = linea.split(";");
 
-});
+        const orden = (columnas[0] || "").trim();
 
-console.log("Lineas:", lineas.length);
-console.log("Registros:", registros.length);
+        if (!orden) return;
+
+        if (!isNaN(parseInt(orden))) {
+
+            registros.push(columnas);
+
+        }
+
+    });
+
+    console.log("Registros encontrados:", registros.length);
 
     document.getElementById("totalOT").innerText =
         registros.length;
 
-    const clientes = new Set();
-    const calles = new Set();
+    let clientes = new Set();
+    let calles = new Set();
 
     registros.forEach(r => {
 
-        const c = r.split(";");
+        const titular = r[3] || "";
+        const domicilio = r[4] || "";
 
-        if(c[4]) clientes.add(c[4]);
+        if(titular.trim() !== "")
+            clientes.add(titular.trim());
 
-        let domicilio = c[5] || "";
+        const calle =
+            domicilio.split("CP:")[0].trim();
 
-        let calle =
-            domicilio.split(" CP:")[0].trim();
-
-        if(calle) calles.add(calle);
+        if(calle !== "")
+            calles.add(calle);
 
     });
 
@@ -132,7 +139,13 @@ console.log("Registros:", registros.length);
     document.getElementById("calles").innerText =
         calles.size;
 
+})
+.catch(error => {
+
+    console.error("ERROR CSV:", error);
+
 });
+
 
 </script>
 
