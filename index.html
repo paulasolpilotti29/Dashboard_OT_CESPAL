@@ -193,16 +193,21 @@ fetch("datos.csv")
 
 const domicilio = r[4] || "";
 
-        let calle = domicilio;
+        
+       let calle = domicilio;
 
-        if(calle.includes("CP:")){
+if(calle.includes("CP:")){
+    calle = calle.split("CP:")[0];
+}
 
-            calle =
-                calle.split("CP:")[0];
+calle = calle.replace(/,\s*ARROYITO/i,'');
 
-        }
+calle = calle.replace(/\d+$/,'');
 
-        calle = calle.trim();
+calle = calle.trim();
+
+// eliminar altura
+calle = calle.replace(/\d+$/,'').trim();
 
         if(calle){
 
